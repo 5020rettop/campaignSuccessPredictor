@@ -59,9 +59,9 @@ valid_countries = sorted(['US', 'DE', 'GB', 'CA', 'AU', 'AT', 'CH', 'NZ', 'IT', 
 st.sidebar.header("Campaign Details")
 
 # Category Selection
-cat_input = st.sidebar.selectbox("Category", options=sorted(category_metrics.keys()))
+cat_input = st.sidebar.selectbox("Category", options=sorted(category_metrics.keys()), value='apps')
 # Country Selection
-country_input = st.sidebar.selectbox("Country", options=valid_countries)
+country_input = st.sidebar.selectbox("Country", options=valid_countries, value='US')
 
 st.sidebar.subheader("Project Goals")
 goal_input = st.sidebar.number_input("Goal Amount (USD)", min_value=1.0, value=5000.0, step=100.0)
@@ -83,7 +83,7 @@ input_data = {
 }
 
 # --- 5. Main Dashboard Logic ---
-st.title("🚀 Kickstarter Campaign Optimizer")
+st.title("Kickstarter Campaign Success Predictor "))
 st.write("Adjust the inputs in the sidebar to see how they affect your success rate.")
 
 if st.button("Predict & Optimize"):
@@ -119,10 +119,16 @@ if st.button("Predict & Optimize"):
         
         # We run 'What-If' scenarios to find the best tweak
         adjustments = [
+             ('Goal', 'Increase by 5%', 'goal_usd_calc', input_data['goal_usd_calc'] * 1.05),
+            ('Goal', 'Increase by 10%', 'goal_usd_calc', input_data['goal_usd_calc'] * 1.10),
             ('Goal', 'Reduce by 10%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.90),
             ('Goal', 'Reduce by 20%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.80),
+            ('Duration', 'Lengthen by 5 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] + 5)),
+            ('Duration', 'Lengthen by 10 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] + 10)),
             ('Duration', 'Shorten by 5 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 5)),
             ('Duration', 'Shorten by 10 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 10)),
+             ('Pledge', 'Decrease Avg Pledge ($5)', 'pledge_per_backer', input_data['pledge_per_backer'] - 5),
+            ('Pledge', 'Decrease Avg Pledge ($10)', 'pledge_per_backer', input_data['pledge_per_backer'] - 10),
             ('Pledge', 'Increase Avg Pledge ($5)', 'pledge_per_backer', input_data['pledge_per_backer'] + 5),
             ('Pledge', 'Increase Avg Pledge ($10)', 'pledge_per_backer', input_data['pledge_per_backer'] + 10),
         ]
