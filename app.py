@@ -1,3 +1,4 @@
+import sklearn
 import streamlit as st
 import pandas as pd
 import joblib
@@ -9,14 +10,18 @@ st.set_page_config(page_title="Kickstarter Success Predictor", layout="wide")
 # --- 2. Load Model & Preprocessor ---
 @st.cache_resource
 def load_assets():
+    prep = None
+    model = None
+    try: 
+        prep = joblib.load('preprocessor.pkl')
+    except FileNotFoundError:
+        st.error("⚠️ Critical Error: Preprocessor file not found.")
     try:
-        # Ensure these files are in the same directory as this script
-        prep = joblib.load('/preprocessor.pkl')
-        model = joblib.load('/XGBmodel.pkl')
-        return prep, model
+        model = joblib.load('XGBmodel.pkl')
     except FileNotFoundError:
         st.error("⚠️ Critical Error: Model files not found.")
-        return None, None
+
+    return prep, model
 
 preprocessor, model = load_assets()
 
@@ -59,9 +64,9 @@ cat_input = st.sidebar.selectbox("Category", options=sorted(category_metrics.key
 country_input = st.sidebar.selectbox("Country", options=valid_countries)
 
 st.sidebar.subheader("Project Goals")
-goal_input = st.sidebar.number_input("Goal Amount (USD)", min_value=100.0, value=10000.0, step=500.0)
-duration_input = st.sidebar.slider("Campaign Duration (Days)", min_value=1, max_value=90, value=30)
-pledge_input = st.sidebar.number_input("Avg Pledge per Backer ($)", min_value=1.0, value=50.0)
+goal_input = st.sidebar.number_input("Goal Amount (USD)", min_value=1.0, value=5000.0, step=100.0)
+duration_input = st.sidebar.slider("Campaign Duration (Days)", min_value=1, max_value=60, value=30)
+pledge_input = st.sidebar.number_input("Avg Pledge per Backer ($)", min_value=1.0, value=15.0, step=5.0)
 
 # Auto-lookup for the hidden feature
 avg_backers_val = category_metrics[cat_input]
