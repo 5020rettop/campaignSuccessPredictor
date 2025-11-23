@@ -117,18 +117,18 @@ if st.button("Predict & Optimize"):
         st.divider()
 
         # --- B. OPTIMIZATION ENGINE ---
-        st.subheader("💡 Smart Recommendations")
+        st.subheader("Parameter Recommendations")
         
         # We run 'What-If' scenarios to find the best tweak
         adjustments = [
-             ('Goal', 'Increase by 5%', 'goal_usd_calc', input_data['goal_usd_calc'] * 1.05),
-            ('Goal', 'Increase by 10%', 'goal_usd_calc', input_data['goal_usd_calc'] * 1.10),
-            ('Goal', 'Reduce by 10%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.90),
-            ('Goal', 'Reduce by 20%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.80),
-            ('Duration', 'Lengthen by 5 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] + 5)),
-            ('Duration', 'Lengthen by 10 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] + 10)),
-            ('Duration', 'Shorten by 5 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 5)),
-            ('Duration', 'Shorten by 10 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 10)),
+             ('Goal', 'Increase Goal by 5%', 'goal_usd_calc', input_data['goal_usd_calc'] * 1.05),
+            ('Goal', 'Increase Goal by 10%', 'goal_usd_calc', input_data['goal_usd_calc'] * 1.10),
+            ('Goal', 'Reduce Goal by 10%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.90),
+            ('Goal', 'Reduce Goal by 20%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.80),
+            ('Duration', 'Increase Duration by 5 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] + 5)),
+            ('Duration', 'Increase Duration by 10 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] + 10)),
+            ('Duration', 'Decrease Duration by 5 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 5)),
+            ('Duration', 'Decrease Duration by 10 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 10)),
              ('Pledge', 'Decrease Avg Pledge ($5)', 'pledge_per_backer', input_data['pledge_per_backer'] - 5),
             ('Pledge', 'Decrease Avg Pledge ($10)', 'pledge_per_backer', input_data['pledge_per_backer'] - 10),
             ('Pledge', 'Increase Avg Pledge ($5)', 'pledge_per_backer', input_data['pledge_per_backer'] + 5),
