@@ -12,10 +12,10 @@ def load_assets():
     try:
         # Ensure these files are in the same directory as this script
         prep = joblib.load('preprocessor.pkl')
-        model = joblib.load('xgb_model.pkl')
+        model = joblib.load('XGBmodel.pkl')
         return prep, model
     except FileNotFoundError:
-        st.error("⚠️ Critical Error: Model files not found. Please download 'preprocessor.pkl' and 'xgb_model.pkl' from your Colab notebook and place them in this folder.")
+        st.error("⚠️ Critical Error: Model files not found. Please download 'preprocessor.pkl' and 'XGBmodel.pkl' from your Colab notebook and place them in this folder.")
         return None, None
 
 preprocessor, model = load_assets()
