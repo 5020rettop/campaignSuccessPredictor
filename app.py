@@ -59,9 +59,11 @@ valid_countries = sorted(['US', 'DE', 'GB', 'CA', 'AU', 'AT', 'CH', 'NZ', 'IT', 
 st.sidebar.header("Campaign Details")
 
 # Category Selection
-cat_input = st.sidebar.selectbox("Category", options=sorted(category_metrics.keys()), value='apps')
+default_category_index = sorted(category_metrics.keys()).index('apps')
+cat_input = st.sidebar.selectbox("Category", options=sorted(category_metrics.keys()), index=default_category_index)
 # Country Selection
-country_input = st.sidebar.selectbox("Country", options=valid_countries, value='US')
+default_country_index = valid_countries.index('US')
+country_input = st.sidebar.selectbox("Country", options=valid_countries, index=default_country_index)
 
 st.sidebar.subheader("Project Goals")
 goal_input = st.sidebar.number_input("Goal Amount (USD)", min_value=1.0, value=5000.0, step=100.0)
