@@ -83,7 +83,7 @@ input_data = {
 }
 
 # --- 5. Main Dashboard Logic ---
-st.title("Kickstarter Campaign Success Predictor "))
+st.title("Kickstarter Campaign Success Predictor ")
 st.write("Adjust the inputs in the sidebar to see how they affect your success rate.")
 
 if st.button("Predict & Optimize"):
