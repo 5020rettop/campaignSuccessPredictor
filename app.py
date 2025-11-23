@@ -1,25 +1,165 @@
 import streamlit as st
-import joblib
 import pandas as pd
+import joblib
+import numpy as np
 
-# Load the model
-model = joblib.load('XGBmodel.pkl')
+# --- 1. Page Config ---
+st.set_page_config(page_title="Kickstarter Success Predictor", layout="wide")
 
-st.title("Success Predictor")
+# --- 2. Load Model & Preprocessor ---
+@st.cache_resource
+def load_assets():
+    try:
+        # Ensure these files are in the same directory as this script
+        prep = joblib.load('preprocessor.pkl')
+        model = joblib.load('xgb_model.pkl')
+        return prep, model
+    except FileNotFoundError:
+        st.error("⚠️ Critical Error: Model files not found. Please download 'preprocessor.pkl' and 'xgb_model.pkl' from your Colab notebook and place them in this folder.")
+        return None, None
 
-# Create inputs
-user_input_1 = st.number_input("Funding Goal ($)")
-user_input_2 = st.selectbox("Category", ["Tech", "Art", "Food"])
-# ... add all your inputs
+preprocessor, model = load_assets()
 
-if st.button("Predict"):
-    # Prepare data for model
-    input_data = pd.DataFrame([[user_input_1, user_input_2]], columns=['Goal', 'Category'])
-    
-    # Get Prediction
-    prediction = model.predict_proba(input_data)[0][1] # Probability of success
-    st.metric("Chance of Success", f"{prediction:.2%}")
+# --- 3. Extracted Data (From your CSV) ---
+# Mapped from 'kickstarter_data_cleaned_revised.csv'
+category_metrics = {
+    'academic': 3.25, 
+    'apps': 100.16, 
+    'blues': 194.65, 
+    'comedy': 29.67, 
+    'experimental': 49.96, 
+    'festivals': 36.12, 
+    'flight': 162.39, 
+    'gadgets': 379.41, 
+    'hardware': 361.21, 
+    'immersive': 54.75, 
+    'makerspaces': 71.97, 
+    'musical': 53.89, 
+    'places': 5.95, 
+    'plays': 43.02, 
+    'robots': 210.86, 
+    'shorts': 51.58, 
+    'software': 87.18, 
+    'sound': 351.55, 
+    'spaces': 172.73, 
+    'thrillers': 10.00, 
+    'wearables': 422.07, 
+    'web': 24.79, 
+    'webseries': 11.00
+}
 
-    # Logic to suggest improvement (simplified example)
-    if user_input_1 > 10000:
-        st.info("Tip: Lowering your goal below $10k usually increases success rates by 15%.")
+valid_countries = sorted(['US', 'DE', 'GB', 'CA', 'AU', 'AT', 'CH', 'NZ', 'IT', 'MX', 'SE', 'ES', 'DK', 'NL', 'IE', 'NO', 'FR', 'BE', 'LU', 'SG', 'HK'])
+
+# --- 4. Sidebar Inputs ---
+st.sidebar.header("Campaign Details")
+
+# Category Selection
+cat_input = st.sidebar.selectbox("Category", options=sorted(category_metrics.keys()))
+# Country Selection
+country_input = st.sidebar.selectbox("Country", options=valid_countries)
+
+st.sidebar.subheader("Project Goals")
+goal_input = st.sidebar.number_input("Goal Amount (USD)", min_value=100.0, value=10000.0, step=500.0)
+duration_input = st.sidebar.slider("Campaign Duration (Days)", min_value=1, max_value=90, value=30)
+pledge_input = st.sidebar.number_input("Avg Pledge per Backer ($)", min_value=1.0, value=50.0)
+
+# Auto-lookup for the hidden feature
+avg_backers_val = category_metrics[cat_input]
+st.sidebar.info(f"ℹ️ Historical Avg Backers for '{cat_input}': **{avg_backers_val:.0f}**")
+
+# Construct the input dictionary exactly as the model expects
+input_data = {
+    'country': country_input,
+    'category': cat_input,
+    'goal_usd_calc': goal_input,
+    'campaign_duration_day': duration_input,
+    'pledge_per_backer': pledge_input,
+    'avg_backers_per_category': avg_backers_val  # Automatically filled
+}
+
+# --- 5. Main Dashboard Logic ---
+st.title("🚀 Kickstarter Campaign Optimizer")
+st.write("Adjust the inputs in the sidebar to see how they affect your success rate.")
+
+if st.button("Predict & Optimize"):
+    if preprocessor and model:
+        
+        # --- A. PREDICTION ---
+        # Convert input to DataFrame
+        input_df = pd.DataFrame([input_data])
+        
+        # Transform data
+        processed_data = preprocessor.transform(input_df)
+        
+        # Get Probability
+        current_prob = model.predict_proba(processed_data)[0][1]
+        
+        # Display Big Metric
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Success Probability", f"{current_prob:.1%}")
+        
+        with col2:
+            if current_prob > 0.75:
+                st.success("✅ Strong Campaign! You are on track.")
+            elif current_prob > 0.50:
+                st.warning("⚠️ Moderate Risk. Consider the suggestions below.")
+            else:
+                st.error("❌ High Risk. Adjustments strongly recommended.")
+
+        st.divider()
+
+        # --- B. OPTIMIZATION ENGINE ---
+        st.subheader("💡 Smart Recommendations")
+        
+        # We run 'What-If' scenarios to find the best tweak
+        adjustments = [
+            ('Goal', 'Reduce by 10%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.90),
+            ('Goal', 'Reduce by 20%', 'goal_usd_calc', input_data['goal_usd_calc'] * 0.80),
+            ('Duration', 'Shorten by 5 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 5)),
+            ('Duration', 'Shorten by 10 days', 'campaign_duration_day', max(7, input_data['campaign_duration_day'] - 10)),
+            ('Pledge', 'Increase Avg Pledge ($5)', 'pledge_per_backer', input_data['pledge_per_backer'] + 5),
+            ('Pledge', 'Increase Avg Pledge ($10)', 'pledge_per_backer', input_data['pledge_per_backer'] + 10),
+        ]
+
+        results = []
+
+        for adj_type, adj_name, col_name, new_val in adjustments:
+            # Create temp data copy
+            temp_data = input_data.copy()
+            temp_data[col_name] = new_val
+            
+            # Predict with adjustment
+            temp_df = pd.DataFrame([temp_data])
+            temp_processed = preprocessor.transform(temp_df)
+            new_prob = model.predict_proba(temp_processed)[0][1]
+            
+            impact = new_prob - current_prob
+            
+            results.append({
+                'Type': adj_type,
+                'Suggestion': adj_name,
+                'New Probability': new_prob,
+                'Impact': impact
+            })
+
+        # Convert to DataFrame & Sort
+        results_df = pd.DataFrame(results).sort_values(by='Impact', ascending=False)
+        best_option = results_df.iloc[0]
+
+        # Display Best Recommendation
+        if best_option['Impact'] > 0.005:
+            st.info(f"**Top Tip:** Try to **{best_option['Suggestion']}**.")
+            st.write(f"This single change could boost your chance by **+{best_option['Impact']:.1%}** (up to {best_option['New Probability']:.1%}).")
+        else:
+            st.info("Minor adjustments to Goal or Duration won't change much. Your category/country selection is the main driver here.")
+
+        # Show Comparison Table
+        st.write("### Simulation Results")
+        display_df = results_df.copy()
+        display_df['New Probability'] = display_df['New Probability'].map('{:.1%}'.format)
+        display_df['Impact'] = display_df['Impact'].map('{:+.1%}'.format)
+        st.dataframe(display_df[['Type', 'Suggestion', 'New Probability', 'Impact']], use_container_width=True, hide_index=True)
+
+    else:
+        st.warning("Models not loaded. Please check your .pkl files.")
